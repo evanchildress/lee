@@ -1,0 +1,8 @@
+*.Rproj.user
+*.Rhistory
+*.RData
+results/**
+*.tif
+.Rproj.user
+.csv
+dataStore/**

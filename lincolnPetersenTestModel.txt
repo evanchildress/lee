@@ -1,0 +1,17 @@
+model{
+  lambda~dunif(0,1000)
+  p~dunif(0,1)
+  
+
+  #Likelihood
+  for(i in 1:nSites){
+    #State process
+    N[i]~dpois(lambda)
+  
+    #Observation process
+    y[i,1]~dbin(p,N[i]) #first pass
+    y[i,2]~dbin(p,y[i,1]) #second pass, recaptures
+    y[i,3]~dbin(p,N[i]-y[i,1]) #second pass, unmarked individuals
+  }
+
+}
