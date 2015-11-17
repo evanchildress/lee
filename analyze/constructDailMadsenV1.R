@@ -1,4 +1,5 @@
-model{
+cat( #Dale-Madsen model for lee with 2 stages
+"model{
   #data inputs:
 #   nYears
 #   nSites
@@ -39,15 +40,16 @@ model{
   
   #arrivals, a=1 is reproduction (in place or somewhere else), could have a=2 for adult immigration
 
-  alphaSigma~dunif(0,5)
-  alphaTau<-1/pow(alphaSigma,2)
+  #alphaSigma~dunif(0,5)
+  #alphaTau<-1/pow(alphaSigma,2)
 
   for(t in 1:(nYears-1)){
     for(a in 1){
       alphaMu[t,a]~dnorm(0,0.01) #varies across time
 
       for(s in 1:nSites){
-        logAlpha[s,t,a]~dnorm(alphaMu[t,a],alphaTau)
+        #logAlpha[s,t,a]~dnorm(alphaMu[t,a],alphaTau)
+        logAlpha[s,t,a]<-alphaMu[t,a]
         alpha[s,t,a]<-exp(logAlpha[s,t,a])
       }
     }
@@ -84,7 +86,7 @@ model{
     for(t in 1:(nYears-1)){
       #stages: 1=yoy, 2=1+
       #yoy abundance is only reproduction (or arrival of reproduced inviduals)
-      N[s,t+1,1]~dpois(alpha[s,t,1])
+      N[s,t+1,1]~dnegbin(alpha[s,t,1],r)
       
       #1+ in t+1 split into maturing yoy, surviving 1+, and arriving 1+
       S[s,t,1]~dbin(phi[s,t,1],N[s,t,1]) #apparent survival of yoy
@@ -103,4 +105,4 @@ model{
       }
     }
   }
-}
+}",file="~/lee/model.txt")

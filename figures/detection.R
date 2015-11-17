@@ -1,4 +1,4 @@
-sims<-readRDS("~/lee/results/nMixOut.rds")$BUGSoutput$sims.list
+sims<-readRDS("~/lee/results/dailMadsenOut.rds")$BUGSoutput$sims.list
 load("~/lee/dataStore/cleanData/leeBktWithAge.rdata")
 
 siteWidth<-acast(melt(siteData[,list(site,"year"=year(date),siteAvgWidth)],

@@ -1,4 +1,5 @@
-model{
+cat( #Dale-Madsen model for lee with 2 stages
+"model{
   #data inputs:
 #   nYears
 #   nSites
@@ -103,4 +104,4 @@ model{
       }
     }
   }
-}
+}",file="~/lee/model.txt")
