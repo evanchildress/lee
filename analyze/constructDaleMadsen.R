@@ -12,32 +12,44 @@ cat( #Dale-Madsen model for lee with 2 stages
   #initial abundance parameters
   for(a in 1:nAges){
     lambdaMu[a]~dnorm(0,0.01) #average abundance for starting year
-    lambdaEps[a]~dunif(0,5) #variance for random site effect for starting abundance
+    lambdaSigma[a]~dunif(0,5) #variance for random site effect for starting abundance
+    lambdaTau[a]<-1/pow(lambdaSigma[a],2)
     
     for(s in 1:nSites){
-      logLambda[s,a]~dnorm(lambdaMu[a],lambdaEps[a]) #random site effect for initial abundance
+      logLambda[s,a]~dnorm(lambdaMu[a],lambdaTau[a]) #random site effect for initial abundance
       lambda[s,a]<-exp(logLambda[s,a])
     }
   }
   
   #survival parameters
+  for(a in 1:nAges){
+    phiSigma[a]~dunif(0,5)#variance for random site effect on surival
+    phiTau[a]<-1/pow(phiSigma[a],2)
+  }
   for(t in 1:(nYears-1)){
     for(a in 1:nAges){ 
-      phiMu[t,a]~dunif(0,1) #average phi for each time/stage
+      phiMu[t,a]~dnorm(0,0.37) #average phi for each time/stage
+
       
       for(s in 1:nSites){
-        phi[s,t,a]<-phiMu[t,a] #constant across sites, should probably be random
+        logitPhi[s,t,a]~dnorm(phiMu[t,a],phiTau[a]) #random site effect on survival constant across time 
+        phi[s,t,a]<-1/(1+exp(logitPhi[s,t,a]))      
       }
     }
   }
   
   #arrivals, a=1 is reproduction (in place or somewhere else), could have a=2 for adult immigration
+
+  alphaSigma~dunif(0,5)
+  alphaTau<-1/pow(alphaSigma,2)
+
   for(t in 1:(nYears-1)){
     for(a in 1){
-      alphaMu[t,a]~dunif(0,50) #varies across time
-      
+      alphaMu[t,a]~dnorm(0,0.01) #varies across time
+
       for(s in 1:nSites){
-        alpha[s,t,a]<-alphaMu[t,a] #just using a yearly value here, should be random by site probably
+        logAlpha[s,t,a]~dnorm(alphaMu[t,a],alphaTau)
+        alpha[s,t,a]<-exp(logAlpha[s,t,a])
       }
     }
   }

@@ -61,7 +61,7 @@ inits<-function(){list(N=nInits
                        ,S=sInits
                        )}
 
-params<-c("lambda","phiMu","sdSite","sdYear","beta")
+params<-c("lambdaMu","lambdaSigma","phiMu","phiSigma","alphaSigma","alphaMu","beta")
 
 ni=3000
 nb=2000
