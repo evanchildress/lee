@@ -11,12 +11,12 @@ cat( #Dale-Madsen model for lee with 2 stages
   
   #initial abundance parameters
   for(a in 1:nAges){
-    lambdaMu[a]~dnorm(0,0.01) #average abundance for starting year
-    lambdaSigma[a]~dunif(0,5) #variance for random site effect for starting abundance
+    lambdaMu[a]~dnorm(0,0.01) #mean for lognormal
+    lambdaSigma[a]~dunif(0,5) #sd for lognormal
     lambdaTau[a]<-1/pow(lambdaSigma[a],2)
     
     for(s in 1:nSites){
-      logLambda[s,a]~dnorm(lambdaMu[a],lambdaTau[a]) #random site effect for initial abundance
+      logLambda[s,a]~dnorm(lambdaMu[a],lambdaTau[a]) 
       lambda[s,a]<-exp(logLambda[s,a])
     }
   }

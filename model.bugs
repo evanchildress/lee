@@ -4,7 +4,7 @@ model{
     for(g in 1:nGroups){
     for(y in 1:nYears){ #fixed year effect
     #overall mean length for each cohort in each year
-    mu[g,y]~dnorm(0,0.001)T(muPriors[g,2],muPriors[g,3])
+    mu[g,y]~dnorm(0,0.001)I(muPriors[g,2],muPriors[g,3])
     
     #fixed year effect on pu (inclusion in group g)
     beta[g,y]~dgamma(1,1)

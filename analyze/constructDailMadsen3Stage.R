@@ -32,7 +32,8 @@ cat( #Dale-Madsen model for lee with 2 stages
 
       
       for(s in 1:nSites){
-        logitPhi[s,t,a]~dnorm(phiMu[t,a],phiTau[a]) #random site effect on survival constant across time 
+        #logitPhi[s,t,a]~dnorm(phiMu[t,a],phiTau[a]) #random site effect on survival constant across time 
+        logitPhi[s,t,a]<-phiMu[t,a]
         phi[s,t,a]<-1/(1+exp(logitPhi[s,t,a]))      
       }
     }
@@ -55,16 +56,16 @@ cat( #Dale-Madsen model for lee with 2 stages
   }
   
   #detection, depends only on siteWidth
-  for(b in 1:2){ #2 betas intercept and slope for siteWidth
+  for(b in 1:3){ #2 betas intercept and slope for siteWidth
     for(a in 1:nAges){
-      beta[b,a]~dnorm(0,1)
+      beta[b,a]~dnorm(0,0.37)
     }
   }
 
   for(s in 1:nSites){
     for(t in 1:nYears){
       for(a in 1:nAges){
-        logitP[s,t,a]<-beta[1,a]+beta[2,a]*siteWidth[s,t]
+        logitP[s,t,a]<-beta[1,a]+beta[2,a]*siteWidthOverall[s,t]
         p[s,t,a]<-1/(1+exp(logitP[s,t,a]))
       }
     }
@@ -83,14 +84,17 @@ cat( #Dale-Madsen model for lee with 2 stages
   #loop through subsequent years
   for(s in 1:nSites){
     for(t in 1:(nYears-1)){
-      #stages: 1=yoy, 2=1+
+      #stages: 1=yoy, 2=1, 3=2+
       #yoy abundance is only reproduction (or arrival of reproduced inviduals)
       N[s,t+1,1]~dpois(alpha[s,t,1])
       
-      #1+ in t+1 split into maturing yoy, surviving 1+, and arriving 1+
-      S[s,t,1]~dbin(phi[s,t,1],N[s,t,1]) #apparent survival of yoy
-      S[s,t,2]~dbin(phi[s,t,2],N[s,t,2]) #apparent survival of 1+ year olds
-      N[s,t+1,2]<-S[s,t,1]+S[s,t,2] #summed adults from all processes
+      #1 year olds in t+1 split into maturing yoy, surviving 1+,
+      N[s,t+1,2]~dbin(phi[s,t,1],N[s,t,1])
+
+      #2+ in t+1 split into surviving 1 year olds (stage 2) and surviving 2+
+      S[s,t,1]~dbin(phi[s,t,2],N[s,t,2]) #apparent survival of 1 year olds 
+      S[s,t,2]~dbin(phi[s,t,3],N[s,t,3]) #apparent survival of 2+
+      N[s,t+1,3]<-S[s,t,1]+S[s,t,2] #summed adults from all processes
     }
   }
   

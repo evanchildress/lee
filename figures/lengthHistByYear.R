@@ -1,12 +1,9 @@
-sims<-readRDS("~/lee/results/cohortMixtureOut.rds")$BUGSoutput$sims.list
+sims<-readRDS("~/lee/results/cohortMixtureOutBkt.rds")$BUGSoutput$sims.list
 load("~/lee/dataStore/cleanData/niles.rDATA")
-apply(sims$sd,2,mean)
-apply(sims$mu,2,mean)
-annualMeans<-apply(sims$muY,c(2,3),mean)
-apply(sims$age,2,median)
 
+fish<-fish[species=='brookTrout']
 fish[,age:=apply(sims$age,2,median)]
-
+fish[,age:=sims$age[600,]]
 makeHist<-function(y,ylimit=T){
   for(a in 1:4){
     assign(paste0("hist",a),
@@ -23,7 +20,7 @@ makeHist<-function(y,ylimit=T){
 }
 
 tiff.par("~/lee/figures/lengthHistByYear.tif",mfrow=c(5,1),
-         mar=c(2.5,2.5,1,0),width=3,height=5,oma=c(0,0,1,0))
+         mar=c(2.5,2.5,1,0),width=3,height=5,oma=c(0,0,1,0),lwd=1)
 for(y in 2011:2015){
   makeHist(y,ylimit=F)
   if(y==2011){

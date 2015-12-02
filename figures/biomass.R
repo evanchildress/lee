@@ -59,7 +59,7 @@ dev.off()
 
 biomass$scaledBiomass<-biomass$biomass/biomass$siteWidth
 
-colors<-colfunc(round(max(biomass$siteWidth)*200))
+colors<-colfunc(round(max(biomass$siteWidth)))
 
 tiff.par("~/lee/figures/biomassScaled.tif")
 plot(scaledBiomass~year,data=biomass,pch=NA)

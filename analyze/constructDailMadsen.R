@@ -3,6 +3,7 @@ cat( #Dale-Madsen model for lee with 2 stages
   #data inputs:
 #   nYears
 #   nSites
+#   nAges
 #   y dim=c(nSites,nYears,nAges,nPasses)
 #   siteWidth dim=c(nSites,nYears)
   
@@ -23,7 +24,7 @@ cat( #Dale-Madsen model for lee with 2 stages
   
   #survival parameters
   for(a in 1:nAges){
-    phiSigma[a]~dunif(0,5)#variance for random site effect on surival
+    phiSigma[a]~dunif(0,10)#variance for random site effect on surival
     phiTau[a]<-1/pow(phiSigma[a],2)
   }
   for(t in 1:(nYears-1)){
@@ -32,7 +33,8 @@ cat( #Dale-Madsen model for lee with 2 stages
 
       
       for(s in 1:nSites){
-        logitPhi[s,t,a]~dnorm(phiMu[t,a],phiTau[a]) #random site effect on survival constant across time 
+        #logitPhi[s,t,a]~dnorm(phiMu[t,a],phiTau[a]) #random site effect on survival constant across time 
+        logitPhi[s,t,a]<-phiMu[t,a]
         phi[s,t,a]<-1/(1+exp(logitPhi[s,t,a]))      
       }
     }
@@ -40,31 +42,41 @@ cat( #Dale-Madsen model for lee with 2 stages
   
   #arrivals, a=1 is reproduction (in place or somewhere else), could have a=2 for adult immigration
 
-  alphaSigma~dunif(0,5)
+  alphaSigma~dunif(0,10) #variation on random site effect
   alphaTau<-1/pow(alphaSigma,2)
 
   for(t in 1:(nYears-1)){
     for(a in 1){
-      alphaMu[t,a]~dnorm(0,0.01) #varies across time
+      alphaMu[t,a]~dnorm(0,0.001) #fixed effect for year
 
       for(s in 1:nSites){
-        logAlpha[s,t,a]~dnorm(alphaMu[t,a],alphaTau)
+        
+        logAlpha[s,t,a]~dnorm(alphaMu[t,a],alphaTau) #random site effect
         alpha[s,t,a]<-exp(logAlpha[s,t,a])
       }
     }
   }
   
-  #detection, depends only on siteWidth
-  for(b in 1:2){ #2 betas intercept and slope for siteWidth
+  #detection, depends only on siteWidth with random site effect
+  for(b in 1:3){ #2 betas intercept and slope for siteWidth
     for(a in 1:nAges){
-      beta[b,a]~dnorm(0,0.37)
+      beta[b,a]~dnorm(0,0.37) #Jeffrey's prior, uninformative on logit scale
     }
   }
+#   tauP<-1/pow(sigmaP,2)
+#   sigmaP~dunif(0,5)
+#   for(s in 1:nSites){
+#     for(t in 1:nYears){
+#       for(a in 1:nAges){
+#         epsP[s]~dnorm(0,tauP)
+#       }
+#     }
+#   }
 
   for(s in 1:nSites){
     for(t in 1:nYears){
       for(a in 1:nAges){
-        logitP[s,t,a]<-beta[1,a]+beta[2,a]*siteWidth[s,t]
+        logitP[s,t,a]<-beta[1,a]+beta[2,a]*siteWidthOverall[s,t]#+epsP[s,t,a]
         p[s,t,a]<-1/(1+exp(logitP[s,t,a]))
       }
     }

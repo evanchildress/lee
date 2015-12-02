@@ -1,10 +1,5 @@
-library(reshape2)
-
-#make the model file
-source("~/lee/analyze/constructDaleMadsen.R")
-
-#load data and eliminate extraneous columns
 load("~/lee/dataStore/cleanData/leeBktWithAge.rdata")
+fish[age>=2,age:=2]
 counts<-fish[species=="brookTrout",.(n=length(length)),by=list(site,date,age,pass,species)]
 counts[,year:=year(date)]
 counts[,date:=NULL]
@@ -30,28 +25,7 @@ counts[skippedPasses,n:=NA]
 
 #make the counts an array
 countArray<-acast(melt(counts,id.vars=c("site","year","age","pass")),
-              site~year~age~pass)
-
-#prepare siteWidth detection covariate
-siteWidth<-acast(melt(siteData[,list(site,"year"=year(date),siteAvgWidth)],
-                      id.vars=c("site","year")),
-                 site~year)
-  #fill width NAs with mean for that site
-  widthNas<-which(is.na(siteWidth))
-  for(i in widthNas){
-    siteWidth[i]<-rowMeans(siteWidth,na.rm=T)[
-                    min((i-30*0:4)[which(i-30*0:4>0)])]
-  }
-siteWidthCentered<-(siteWidth-mean(siteWidth))/sd(siteWidth)
-
-#data structure
-nAges<-2; nYears<-dim(countArray)[2]; nSites<-dim(countArray)[1]
-
-jagsData<-list(y=countArray,
-               nSites=nSites,
-               nYears=nYears,
-               nAges=nAges,
-               siteWidth=siteWidthCentered)
+                  site~year~age~pass)
 
 nInits<-apply(countArray,c(1,2,3),sum,na.rm=T)+20
 sInits<-nInits[,1:4,]
@@ -59,14 +33,19 @@ nInits[,2:5,2]<-NA
 
 inits<-function(){list(N=nInits
                        ,S=sInits
-                       )}
+)}
 
-params<-c("lambdaMu","lambdaSigma","phiMu","phiSigma","alphaSigma","alphaMu","beta")
+betaSizeInits<-array(exp(rnorm(nTotalAges*nYears)),dim=c(nTotalAges,nYears))
+puInits<-betaSizeInits
+for(t in 1:nYears){
+  puInits[,t]<-betaSizeInits[,t]/sum(betaSizeInits[,t])
+}
 
-ni=3000
-nb=2000
-nt=2
-nc=3
-
-out<-jags(jagsData,inits=inits,params,"model.txt",nc,ni,nb,nt)
-saveRDS(out,"~/lee/results/daleMadsenOut.rds")
+inits<-function(){list(betaSize=t(betaInits),
+                       muSize=array(c(59.4,58,50,42,49,
+                                      110,101,106,96,102,
+                                      140,152,133,131,137,
+                                      184,207,187,188,208,
+                                      280,280,280,280,280),
+                                    dim=c(nTotalAges,nYears)),
+                       sigma=c(7,13,15.9,15.9))}

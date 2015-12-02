@@ -1,4 +1,32 @@
-model{
+#library(mixtools)
+library(R2jags)
+library(data.table)
+
+load("~/lee/dataStore/cleanData/niles.rDATA")
+bkt<-fish[species=="brookTrout"]
+
+#mixture.model<-normalmixEM(x=fish$length,lambda=0.5,mu=c(50,110,150),sigma=c(20,20,20))
+nYears<-length(unique(year(bkt$date)))
+nGroups<-4
+
+muPriors<-matrix(c(50,35,70,
+                   100,90,125,
+                   150,125,175,
+                   200,175,300),
+                 nrow=4,byrow=T)
+siteNum<-as.numeric(as.factor(bkt$site))
+
+jagsdata<-list(length=bkt$length,
+               year=year(bkt$date)-2010,
+               nYears=nYears,
+               n=length(bkt$length),
+               nGroups=nGroups,
+               muPriors=muPriors,
+               site=siteNum,
+               nSites=length(unique(siteNum))
+)
+
+cat("model{
     
     
     for(g in 1:nGroups){
@@ -48,4 +76,28 @@ model{
     length[i]~dnorm(muS[age[i],year[i],site[i]],tau[age[i]])
     }
     
-    }
+    }",file='~/lee/model.txt')
+
+
+
+nb=1000
+nt=5
+ni=3000
+nc=3
+
+params<-c("pu","mu","sigma","age")
+
+out<-jags(jagsdata,inits=NULL,params,"~/lee/model.txt",
+          nc,ni,nb,nt)
+saveRDS(out,"~/lee/results/cohortMixtureOutBkt.rds")
+sims<-out$BUGSoutput$sims.list
+# apply(sims$sigma,2,mean)
+# apply(sims$mu,2,mean)
+# annualMeans<-apply(sims$muY,c(2,3),mean)
+#apply(sims$age,2,median)
+
+bkt[,age:=round(apply(sims$age,2,median))]
+#bkt[,age:=sims$age[600,]]
+fish<-bkt
+save(fish,siteData,skippedPasses,file="~/lee/dataStore/cleanData/leeBktWithAge.rDATA")
+

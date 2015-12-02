@@ -9,8 +9,9 @@ lengthWeight<-lm(logWeight~logLength,data=fish)
 
 fish[,condition:=100000*weight/length^3]
 #fish[,condition:=residuals(lengthWeight)]
-condition<-fish[,mean(condition,na.rm=T),by=list(site,year(date),age)]
-setnames(condition,"V1","condition")
+condition<-fish[,list(mean(condition,na.rm=T),
+                      length(condition)),by=list(site,year(date),age)]
+setnames(condition,c("V1","V2"),c("condition","n"))
 
 colors<-sample(colors(),100)
 

@@ -5,7 +5,7 @@ source("~/lee/analyze/constructDailMadsen.R")
 
 #load data and eliminate extraneous columns
 load("~/lee/dataStore/cleanData/leeBktWithAge.rdata")
-fish[age>=2,age:=2]
+fish[age>=3,age:=3]
 counts<-fish[species=="brookTrout",.(n=length(length)),by=list(site,date,age,pass,species)]
 counts[,year:=year(date)]
 counts[,date:=NULL]
@@ -70,7 +70,7 @@ nt=2
 nc=3
 
 out<-jags(jagsData,inits=inits,params,"model.txt",nc,ni,nb,nt)
-saveRDS(out,"~/lee/results/dailMadsenOut.rds")
+saveRDS(out,"~/lee/results/dailMadsen3StageOut.rds")
 
 sims<-out$BUGSoutput$sims.list
 phi<-apply(sims$phiMu,c(2,3),
