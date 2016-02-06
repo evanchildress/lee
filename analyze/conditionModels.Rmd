@@ -1,0 +1,173 @@
+---
+title: "conditionModels"
+author: "EvanChildress"
+date: "January 4, 2016"
+output: pdf_document
+---
+
+###Load data and packages
+```{r,echo=F}
+library(R2jags)
+
+load("~/lee/dataStore/cleanData/leeBktWithAge.rdata")
+fish<-fish[,siteNum:=as.numeric(as.factor(site))]
+fish<-fish[!is.na(length)&!is.na(weight)&species=="brookTrout"]
+
+fish<-fish[,condition:=100000*weight/length^3]
+fish<-fish[,age:=ifelse(age==1,1,2)]
+```
+
+###Model condition with fixed year effect
+```{r,echo=F}
+jagsData<-list(condition=fish$condition,
+               year=year(fish$date)-2010,
+               nYears=length(unique(year(fish$date))),
+               site=fish$siteNum,
+               n=nrow(fish),
+               nSites=length(unique(fish$siteNum)),
+               age=fish$age
+)
+
+cat("model{
+  #fixed year effect
+  for(y in 1:nYears){
+    for(a in 1:2){
+      mu[y,a]~dnorm(0,0.01)
+    }
+  }
+  #within site variation
+  for(a in 1:2){
+    sigma[a]~dunif(0,10)
+    tau[a]<-1/pow(sigma[a],2)
+  }
+  for(a in 1:2){
+    #random site effect
+    sigmaSite[a]~dunif(0,1)
+    tauSite[a]<-1/pow(sigma[a],2)
+
+    for(s in 1:nSites){
+      muS[s,a]~dnorm(0,tau[a])
+    } 
+  }
+
+    for(i in 1:n){
+    muSY[i]<-mu[year[i],age[i]]+muS[site[i],age[i]]
+    condition[i]~dnorm(muSY[i],tau[age[i]])
+    }
+    }",file="~/lee/analyze/model.txt")
+
+ni=3000
+nb=1000
+nt=2
+nc=3
+
+params<-c("sigmaSite","sigma","mu")
+
+
+outFixed<-jags(jagsData,inits=NULL,params,"~/lee/analyze/model.txt",nc,ni,nb,nt)
+saveRDS(outFixed,"~/lee/results/conditionFixedYear.rds")
+
+sims<-outFixed$BUGSoutput$sims.list
+```
+
+###Model condition with linear year effect
+```{r, echo=FALSE}
+jagsData<-list(condition=fish$condition,
+               year=year(fish$date)-2010,
+               site=fish$siteNum,
+               n=nrow(fish),
+               nSites=length(unique(fish$siteNum)),
+               age=fish$age
+)
+
+cat("model{
+  #within site variation
+  for(a in 1:2){
+    sigma[a]~dunif(0,10)
+    tau[a]<-1/pow(sigma[a],2)
+
+  #linear parameters for the mean
+    for(b in 1:2){
+      beta[b,a]~dnorm(0,0.01)
+    }
+    #variation on random site effect (on intercept, beta[1,])
+    betaSigma[a]~dunif(0,10)
+    betaTau[a]<-1/pow(betaSigma[a],2)
+  
+    for(s in 1:nSites){
+      siteEffect[s,a]~dnorm(0,betaTau[a])
+    }
+  }
+
+  for(i in 1:n){
+    mu[i]<-beta[1,age[i]]+year[i]*beta[2,age[i]]+siteEffect[site[i],age[i]]
+    condition[i]~dnorm(mu[i],tau[age[i]])
+  }
+}",file="~/lee/analyze/model.txt")
+
+params<-c("beta","betaSigma","sigma")
+
+outLinear<-jags(jagsData,inits=NULL,params,"~/lee/analyze/model.txt",
+                nc,ni,nb,nt)
+saveRDS(outLinear,"~/lee/results/conditionLinear.rds")
+
+simsLinear<-outLinear$BUGSoutput$sims.list
+```
+
+###Model condition with fixed year effect
+```{r,echo=F}
+jagsData<-list(condition=fish$condition,
+               site=fish$siteNum,
+               n=nrow(fish),
+               nSites=length(unique(fish$siteNum)),
+               age=fish$age
+)
+
+cat("model{
+#Overall mean
+  for(a in 1:2){
+    mu[a]~dnorm(0,0.01)
+  }
+
+#within site variation
+  for(a in 1:2){
+    sigma[a]~dunif(0,10)
+    tau[a]<-1/pow(sigma[a],2)
+  }
+
+#random site effect
+  for(a in 1:2){
+    sigmaSite[a]~dunif(0,1)
+    tauSite[a]<-1/pow(sigma[a],2)
+
+    for(s in 1:nSites){
+      muS[s,a]~dnorm(0,tau[a])
+    } 
+  }
+
+    for(i in 1:n){
+    muSY[i]<-mu[age[i]]+muS[site[i],age[i]]
+    condition[i]~dnorm(muSY[i],tau[age[i]])
+    }
+    }",file="~/lee/analyze/model.txt")
+
+params<-c("sigmaSite","sigma","mu")
+
+
+outMean<-jags(jagsData,inits=NULL,params,"~/lee/analyze/model.txt",nc,ni,nb,nt)
+saveRDS(outMean,"~/lee/results/conditionOverallMean.rds")
+
+simsMean<-outMean$BUGSoutput$sims.list
+```
+
+###Compare results
+```{r,echo=F}
+dic<-c(outMean$BUGSoutput$DIC,
+       outLinear$BUGSoutput$DIC,
+       outFixed$BUGSoutput$DIC)
+names(dic)<-c("mean","linear","fixed")
+
+print(dic)
+```
+
+```{r,echo=F}

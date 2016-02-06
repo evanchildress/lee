@@ -24,10 +24,10 @@ setkey(skippedPasses,site,year,pass)
 counts[skippedPasses,n:=NA]
 
 #make the counts an array
-countArray<-acast(melt(counts,id.vars=c("site","year","age","pass")),
+counts<-acast(melt(counts,id.vars=c("site","year","age","pass")),
                   site~year~age~pass)
 
-nInits<-apply(countArray,c(1,2,3),sum,na.rm=T)+20
+nInits<-apply(counts,c(1,2,3),sum,na.rm=T)+20
 sInits<-nInits[,1:4,]
 nInits[,2:5,2]<-NA 
 
@@ -35,17 +35,3 @@ inits<-function(){list(N=nInits
                        ,S=sInits
 )}
 
-betaSizeInits<-array(exp(rnorm(nTotalAges*nYears)),dim=c(nTotalAges,nYears))
-puInits<-betaSizeInits
-for(t in 1:nYears){
-  puInits[,t]<-betaSizeInits[,t]/sum(betaSizeInits[,t])
-}
-
-inits<-function(){list(betaSize=t(betaInits),
-                       muSize=array(c(59.4,58,50,42,49,
-                                      110,101,106,96,102,
-                                      140,152,133,131,137,
-                                      184,207,187,188,208,
-                                      280,280,280,280,280),
-                                    dim=c(nTotalAges,nYears)),
-                       sigma=c(7,13,15.9,15.9))}

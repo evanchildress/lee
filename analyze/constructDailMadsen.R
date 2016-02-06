@@ -5,7 +5,7 @@ cat( #Dale-Madsen model for lee with 2 stages
 #   nSites
 #   nAges
 #   y dim=c(nSites,nYears,nAges,nPasses)
-#   siteWidth dim=c(nSites,nYears)
+#   siteWidth dim=c(nSites,nYears) standardized to have mean zero and sd 1
   
   
   #Priors
@@ -58,25 +58,16 @@ cat( #Dale-Madsen model for lee with 2 stages
   }
   
   #detection, depends only on siteWidth with random site effect
-  for(b in 1:3){ #2 betas intercept and slope for siteWidth
+  for(b in 1:2){ #2 betas intercept and slope for siteWidth
     for(a in 1:nAges){
       beta[b,a]~dnorm(0,0.37) #Jeffrey's prior, uninformative on logit scale
     }
   }
-#   tauP<-1/pow(sigmaP,2)
-#   sigmaP~dunif(0,5)
-#   for(s in 1:nSites){
-#     for(t in 1:nYears){
-#       for(a in 1:nAges){
-#         epsP[s]~dnorm(0,tauP)
-#       }
-#     }
-#   }
 
   for(s in 1:nSites){
     for(t in 1:nYears){
       for(a in 1:nAges){
-        logitP[s,t,a]<-beta[1,a]+beta[2,a]*siteWidthOverall[s,t]#+epsP[s,t,a]
+        logitP[s,t,a]<-beta[1,a]+beta[2,a]*siteWidthOverall[s,t]
         p[s,t,a]<-1/(1+exp(logitP[s,t,a]))
       }
     }

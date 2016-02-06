@@ -6,3 +6,8 @@ results/**
 .Rproj.user
 .csv
 dataStore/**
+figures/**
+*.pdf
+*.rds
+daymet/**
+manuscript/*.docx

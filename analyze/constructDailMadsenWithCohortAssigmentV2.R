@@ -3,9 +3,9 @@ model{
 #Cohort assignment
     for(t in 1:nYears){ #fixed year effect
       for(g in 1:nTotalAges){
-        theta[g,t]~dnorm(0,0.001)I(0,) #difference between mu[g-1] and mu[g] (i.e. mu[1]<mu[2]<mu[3]...)
+        theta[g,t]~dnorm(0,0.001)I(0,) #difference between mu[g-1,] and mu[g,] (i.e. mu[1,]<mu[2,]<mu[3,]...)
       }
-      muSize[1,t]<-theta[1,t]+40
+      muSize[1,t]<-theta[1,t]+40 #sets a lower limit of 40 on mu[1,]
     for(g in 2:nTotalAges){
     #overall mean length for each cohort in each year
         muSize[g,t]<-muSize[g-1,t]+theta[g,t]+45
@@ -33,45 +33,41 @@ model{
     }
     
     #likelihood
-    for(i in 1:n){
-      age[i]~dcat(pu[year[i],])
-      length[i]~dnorm(muSizeSite[age[i],year[i],site[i]],tau[age[i]])
-    }
-  
-# #Create counts for dail madsen model by site, year, stage,and pass
-# #This is a really sluggish way to slot the data into a count array
-  for(i in 1:n){
-    for(s in 1:nSites){
-      thisSite[s,i]<-equals(site[i],s)
-    }
-    for(t in 1:nYears){
-      thisYear[t,i]<-equals(year[i],t)
-    }
-
-    for(a in 1:(nAges-1)){
-      thisAge[a,i]<-equals(age[i],a)
-    }
-    thisAge[nAges,i]<- step(age[i]-nAges) #lump the older ages
-
-    for(p in 1:nPasses){
-      thisPass[p,i]<-equals(pass[i],p)
-    }
-  } 
-  
-  for(s in 1:nSites){
-    for(t in 1:nYears){
-      for(p in 1:nPasses){
-          for(i in 1:totalY[s,t,p]){
-            thisAge[s,t,p,i,a]<-equals(thisSite[s,i]+thisYear[t,i]+thisAge[a,i]+thisPass[p,i],4)
-          }
-            counts[s,t,a,p]<-sum(thisEverything[s,t,a,p,])
-            y[s,t,a,p]<-cut(counts[s,t,a,p])
-        }
-      }
+  for(e in 1:nEval){
+    for(i in 1:eval[e,4]){ #total fish caught in each site, year, pass
+      age[i,eval[e,1],eval[e,2],eval[e,3]]~dcat(pu[eval[e,2],])
+      length[i,eval[e,1],eval[e,2],eval[e,3]]~
+            dnorm(muSizeSite[age[i,eval[e,1],eval[e,2],eval[e,3]],eval[e,2],eval[e,1]],
+                  tau[age[i,eval[e,1],eval[e,2],eval[e,3]]])
     }
   }
 
-
+  
+# #Create counts for dail madsen model by site, year, stage,and pass
+  for(e in 1:nEval){
+    for(i in 1:eval[e,4]){ #total fish caught in each site, year, pass
+      for(a in 1:(nAges-1)){
+        thisAge[i,eval[e,1],eval[e,2],a,eval[e,3]]<-
+                equals(age[i,eval[e,1],eval[e,2],eval[e,3]],a)
+      }
+      thisAge[i,eval[e,1],eval[e,2],nAges,eval[e,3]]<-
+              step(age[i,eval[e,1],eval[e,2],eval[e,3]]-nAges) #lump older cohorts
+    }
+        for(a in 1:nAges){
+            counts[eval[e,1],eval[e,2],a,eval[e,3]]<-sum(thisAge[1:eval[e,4],
+                                                                 eval[e,1],
+                                                                 eval[e,2],
+                                                                 a,
+                                                                 eval[e,3]])
+            y[eval[e,1],eval[e,2],a,eval[e,3]]~
+                  dbin(counts[eval[e,1],eval[e,2],a,eval[e,3]],1)
+#             zeros[eval[e,1],eval[e,2],a,eval[e,3]]<-0
+#             zeros[eval[e,1],eval[e,2],a,eval[e,3]]~
+#                   dpois(lambda[eval[e,1],eval[e,2],a,eval[e,3]])
+#             lambda[eval[e,1],eval[e,2],a,eval[e,3]]<-
+#                   y[eval[e,1],eval[e,2],a,eval[e,3]]
+        }
+      }
 #stage structured Dail Madsen model using counts (derived from modeled ages)
   #Priors
   
@@ -88,10 +84,10 @@ model{
     }
     
     #survival parameters
-    for(a in 1:nAges){
-      phiSigma[a]~dunif(0,10)#variance for random site effect on surival
-      phiTau[a]<-1/pow(phiSigma[a],2)
-    }
+#     for(a in 1:nAges){
+#       phiSigma[a]~dunif(0,10)#variance for random site effect on surival
+#       phiTau[a]<-1/pow(phiSigma[a],2)
+#     }
     for(t in 1:(nYears-1)){
       for(a in 1:nAges){ 
         phiMu[t,a]~dnorm(0,0.37) #average phi for each time/stage
@@ -153,7 +149,7 @@ model{
     #yoy abundance is only reproduction (or arrival of reproduced inviduals)
         N[s,t+1,1]~dpois(alpha[s,t,1])
     
-    #1+ in t+1 split into maturing yoy, surviving 1+, and arriving 1+
+    #1+ in t+1 split into maturing yoy, surviving 1+, (and could add arriving 1+)
         S[s,t,1]~dbin(phi[s,t,1],N[s,t,1]) #apparent survival of yoy
         S[s,t,2]~dbin(phi[s,t,2],N[s,t,2]) #apparent survival of 1+ year olds
         N[s,t+1,2]<-S[s,t,1]+S[s,t,2] #summed adults from all processes
@@ -164,13 +160,13 @@ model{
     for(s in 1:nSites){
       for(t in 1:nYears){
         for(a in 1:nAges){ #stages
-          counts[s,t,a,1]~dbin(cp[s,t,a],N[s,t,a]) #pass 1
+          y[s,t,a,1]~dbin(cp[s,t,a],N[s,t,a]) #pass 1
 
-          N2[s,t,a]<-N[s,t,a]-counts[s,t,a,1]
-          counts[s,t,a,2]~dbin(cp[s,t,a],N2[s,t,a]) #pass 2
+          N2[s,t,a]<-N[s,t,a]-y[s,t,a,1] #fish left after pass 1
+          y[s,t,a,2]~dbin(cp[s,t,a],N2[s,t,a]) #pass 2
 
-          N3[s,t,a]<-N[s,t,a]-counts[s,t,a,1]-counts[s,t,a,2]
-          counts[s,t,a,3]~dbin(cp[s,t,a],N3[s,t,a]) #pass 3
+          N3[s,t,a]<-N[s,t,a]-y[s,t,a,1]-y[s,t,a,2] #fish left after pass 1+2
+          y[s,t,a,3]~dbin(cp[s,t,a],N3[s,t,a]) #pass 3
         }
       }
     }
