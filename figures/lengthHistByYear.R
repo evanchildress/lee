@@ -3,7 +3,7 @@ load("~/lee/dataStore/cleanData/niles.rDATA")
 
 fish<-fish[species=='brookTrout']
 fish[,age:=apply(sims$age,2,median)]
-fish[,age:=sims$age[600,]]
+#fish[,age:=sims$age[600,]]
 makeHist<-function(y,ylimit=T){
   for(a in 1:4){
     assign(paste0("hist",a),
@@ -13,20 +13,22 @@ makeHist<-function(y,ylimit=T){
   if(ylimit){ylimit<-c(0,120)
   } else {ylimit<-c(0,max(counts)*1.1)}
   barplot(t(counts),
-          col=c('red','black','blue','gray'),
+          col=c('gray','black','black','black'),
           main=y,space=0,bty='l',border=NA,
           ylim=ylimit)
   axis(1,seq(0,300,50)-0.5,seq(0,300,50))
 }
 
 tiff.par("~/lee/figures/lengthHistByYear.tif",mfrow=c(5,1),
-         mar=c(2.5,2.5,1,0),width=3,height=5,oma=c(0,0,1,0),lwd=1)
+         mar=c(2.5,2.5,1,0),width=3,height=8,oma=c(0,0,1,0),lwd=1)
 for(y in 2011:2015){
   makeHist(y,ylimit=F)
   if(y==2011){
-    legend("top",c("age0","age1","age2","age3+"),
-            bty='n',inset=-0.65,horiz=T,xpd=NA,x.intersp=0.0,adj=0.5,
-           text.col=c('red','black','blue','gray'))
+#     legend("top",c("age0","age1","age2","age3+"),
+#             bty='n',inset=-0.65,horiz=T,xpd=NA,x.intersp=0.0,adj=0.5,
+#            text.col=c('red','black','blue','gray'))
+    legend(250,10,c("YOY","Adult"),fill=c('gray','black'),
+           bty='n',)
     }
   if(y==2013){title(ylab="Frequency",cex=1.5)}
 }
@@ -38,10 +40,11 @@ tiff.par("~/lee/figures/lengthHistByYear2.tif",mfrow=c(5,1),
 for(y in 2011:2015){
   makeHist(y,ylimit=T)
   if(y==2011){
-    legend("top",c("age0","age1","age2","age3+"),
-           bty='n',inset=-0.65,horiz=T,xpd=NA,x.intersp=0.0,adj=0.5,
-           text.col=c('red','black','blue','gray'))
-  }
+#    legend("top",c("age0","age1","age2","age3+"),
+#           bty='n',inset=-0.65,horiz=T,xpd=NA,x.intersp=0.0,adj=0.5,
+#           text.col=c('gray','black','black','black'))
+    legend(250,100,c("YOY","Adult"),col=c('gray','black'))
+    }
   if(y==2013){title(ylab="Frequency",cex=1.5)}
 }
 title(xlab="Length (mm)",cex=1.5)

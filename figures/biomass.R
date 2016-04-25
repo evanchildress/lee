@@ -1,4 +1,3 @@
-library(vioplot)
 sims<-readRDS("~/lee/results/cohortMixtureOut.rds")$BUGSoutput$sims.list
 load("~/lee/dataStore/cleanData/niles.rDATA")
 apply(sims$sd,2,mean)

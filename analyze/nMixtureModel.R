@@ -45,7 +45,7 @@ if(type=="fixedYear"){
           log(lambda[i,j,a])<-muSite[i,a]+muYear[j,a]+
 #                               betaLambda[1,j,a]*covariates[i,1]+
 #                               betaLambda[2,j,a]*covariates[i,2]+
-                              meanSiteWidth[i]
+                              log(meanSiteWidth[i])
     
     #Observation for depletion sampling
     

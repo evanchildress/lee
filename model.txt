@@ -21,14 +21,14 @@ model{
       }
 
     #slopes for covariates on lambda
-      for(b in 1:2){
-        for(j in 1:nYears){
-          betaLambda[b,j,a]~dnorm(0,0.01)
-          #betaLam[b,a]<-0
-
-          #betaLambda[b,j,a]<-betaLam[b,a]
-        }
-      }
+#       for(b in 1:2){
+#         for(j in 1:nYears){
+#           betaLambda[b,j,a]~dnorm(0,0.01)
+#           #betaLam[b,a]<-0
+# 
+#           #betaLambda[b,j,a]<-betaLam[b,a]
+#         }
+#       }
     }
     
     
@@ -41,9 +41,9 @@ model{
     #abundance
           N[i,j,a]~dpois(lambda[i,j,a])
           log(lambda[i,j,a])<-muSite[i,a]+muYear[j,a]+
-                              betaLambda[1,j,a]*covariates[i,1]+
-                              betaLambda[2,j,a]*covariates[i,2]+
-                              meanSiteWidth[i]
+#                               betaLambda[1,j,a]*covariates[i,1]+
+#                               betaLambda[2,j,a]*covariates[i,2]+
+                              log(meanSiteWidth[i])
     
     #Observation for depletion sampling
     

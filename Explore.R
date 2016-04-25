@@ -44,7 +44,7 @@ setkey(mr,siteSurveyId,species,sizeBin)
 mr<-siteSurveyData[mr]
 
 lp<-function(){
-  data<-markRecap[siteId==site&year==yr&sizeBin==size]
+  data<-markRecap[siteSurveyId==site&year==yr&sizeBin==size]
   nEst<-(data[pass==1,count]*data[pass==2,count])/data[pass==2,recapCount]
   return(nEst)
 }

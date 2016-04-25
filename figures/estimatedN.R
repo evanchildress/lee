@@ -1,4 +1,4 @@
-sims<-readRDS("~/lee/results/nMixOut.rds")$BUGSoutput$sims.list
+sims<-readRDS("~/lee/results/dailMadsenOut.rds")$BUGSoutput$sims.list
 nOut<-apply(sims$N,c(2,3,4),mean)
 nOut<-data.table(melt(nOut))
 setnames(nOut,c("site","year","age","n"))
